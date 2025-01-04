@@ -79,49 +79,51 @@
             .catch((err) => {
                 console.error('Error accessing webcam: ' + err);
             });
+             function sendFrameToServer() {
+                // Draw the current video frame to the hidden canvas
+                canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+                const frameData = canvasElement.toDataURL('image/jpeg');
+            
+                // Send the frame to the Flask server
+                fetch('/process_frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ frame: frameData })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Check if the emotion is not "Detecting.."
+                    if (data.emotion !== "Detecting..") {
+                        // Create a new element for the latest emotion and computation time
+                        const emotionItem = document.createElement('div');
+                        emotionItem.className = 'emotionItem';
+            
+                        const emotionText = document.createElement('span');
+                        emotionText.className = 'emotionText';
+                        emotionText.textContent = `Emotion: ${data.emotion}`;
+            
+                        const emotionTime = document.createElement('span');
+                        emotionTime.className = 'emotionTime';
+                        emotionTime.textContent = `Time: ${data.time_ms} ms`;
+            
+                        // Append the emotion text and computation time to the new element
+                        emotionItem.appendChild(emotionText);
+                        emotionItem.appendChild(emotionTime);
+            
+                        // Add the new emotion item to the top of the container
+                        emotionContainer.insertBefore(emotionItem, emotionContainer.firstChild);
+            
+                        // Automatically scroll to the top to show the latest emotion
+                        emotionContainer.scrollTop = 0;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending frame to server:', error);
+                });
+            }
 
-        function sendFrameToServer() {
-            // Draw the current video frame to the hidden canvas
-            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-            const frameData = canvasElement.toDataURL('image/jpeg');
-
-            // Send the frame to the Flask server
-            fetch('/process_frame', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ frame: frameData })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Create a new element for the latest emotion and computation time
-                const emotionItem = document.createElement('div');
-                emotionItem.className = 'emotionItem';
-
-                const emotionText = document.createElement('span');
-                emotionText.className = 'emotionText';
-                emotionText.textContent = `Emotion: ${data.emotion}`;
-
-                const emotionTime = document.createElement('span');
-                emotionTime.className = 'emotionTime';
-                emotionTime.textContent = `Time: ${data.time_ms} ms`;
-
-                // Append the emotion text and computation time to the new element
-                emotionItem.appendChild(emotionText);
-                emotionItem.appendChild(emotionTime);
-
-                // Add the new emotion item to the top of the container
-                emotionContainer.insertBefore(emotionItem, emotionContainer.firstChild);
-
-                // Automatically scroll to the top to show the latest emotion
-                emotionContainer.scrollTop = 0;
-            })
-            .catch(error => {
-                console.error('Error sending frame to server:', error);
-            });
-        }
-
-        // Send frame every 100 milliseconds
-        setInterval(sendFrameToServer, 100);
+        // Send frame every 500 milliseconds
+        setInterval(sendFrameToServer, 500);
     </script>
 </body>
 </html>
