@@ -3,70 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Emotion Recognition</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            background-color: #d8bfd8; /* Light purple */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        img {
-            max-width: 80%;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-    </style>
+    <title>Live Webcam Feed with Emotion Detection</title>
 </head>
 <body>
-    <h1>Live Emotion Recognition</h1>
-    <video id="video" autoplay></video>
+    <h1>Webcam Feed with Emotion Detection</h1>
+    <video id="webcam" width="640" height="480" autoplay></video>
+
+    <!-- Hidden canvas to capture frames from the video -->
     <canvas id="canvas" style="display: none;"></canvas>
-    <div id="emotion-display">Emotion: Loading...</div>
 
     <script>
-        const video = document.getElementById("video");
-        const canvas = document.getElementById("canvas");
-        const emotionDisplay = document.getElementById("emotion-display");
-        const context = canvas.getContext("2d");
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('canvas');
+        const canvasContext = canvasElement.getContext('2d');
 
-        // Access user's camera
+        // Request webcam access
         navigator.mediaDevices.getUserMedia({ video: true })
             .then((stream) => {
-                video.srcObject = stream;
+                videoElement.srcObject = stream;
             })
-            .catch((error) => {
-                console.error("Error accessing camera:", error);
+            .catch((err) => {
+                console.error('Error accessing webcam: ' + err);
             });
 
-        // Send frames to the server periodically
-        setInterval(() => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Function to send the frame to the server
+        function sendFrameToServer() {
+            // Draw the current video frame onto the canvas
+            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
 
-            canvas.toBlob((blob) => {
-                const formData = new FormData();
-                formData.append("frame", blob);
+            // Convert the frame to a base64-encoded image
+            const frameData = canvasElement.toDataURL('image/jpeg');
 
-                fetch("/process_frame", {
-                    method: "POST",
-                    body: formData,
-                })
-                .then((response) => response.json())
-                .then((data) => {
-                    emotionDisplay.textContent = `Emotion: ${data.emotion}, Time: ${data.time_ms}ms`;
-                })
-                .catch((error) => console.error("Error processing frame:", error));
-            }, "image/jpeg");
-        }, 500); // Send a frame every 500ms
+            // Send the frame to the server using Fetch API
+            fetch('/process_frame', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ frame: frameData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the emotion detected and update the video feed with the processed frame
+                console.log('Emotion:', data.emotion);
+                console.log('Time taken:', data.time_ms, 'ms');
+
+                // Update the video element with the processed frame
+                const processedImage = new Image();
+                processedImage.src = data.frame;
+                processedImage.onload = function() {
+                    document.body.appendChild(processedImage);  // Optionally, you can replace the existing image here
+                };
+            })
+            .catch(error => {
+                console.error('Error sending frame to server:', error);
+            });
+        }
+
+        // Call sendFrameToServer every 100ms to send frames periodically
+        setInterval(sendFrameToServer, 100);
     </script>
 </body>
 </html>
