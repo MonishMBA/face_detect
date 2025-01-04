@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Emotion Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #d8bfd8; /* Light purple */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        img {
+            max-width: 80%;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Emotion Recognition</h1>
+    <video id="video" autoplay></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <div id="emotion-display">Emotion: Loading...</div>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const emotionDisplay = document.getElementById("emotion-display");
+        const context = canvas.getContext("2d");
+
+        // Access user's camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((error) => {
+                console.error("Error accessing camera:", error);
+            });
+
+        // Send frames to the server periodically
+        setInterval(() => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob((blob) => {
+                const formData = new FormData();
+                formData.append("frame", blob);
+
+                fetch("/process_frame", {
+                    method: "POST",
+                    body: formData,
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    emotionDisplay.textContent = `Emotion: ${data.emotion}, Time: ${data.time_ms}ms`;
+                })
+                .catch((error) => console.error("Error processing frame:", error));
+            }, "image/jpeg");
+        }, 500); // Send a frame every 500ms
+    </script>
+</body>
+</html>

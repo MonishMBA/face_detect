@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Image</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #ffe4b5; /* Light orange */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .result {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .message {
+            font-size: 18px;
+            font-style: italic;
+            color: #999;
+        }
+        .image-container {
+            text-align: center;
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color: #218838;
+        }
+        img {
+        /*width: 950px;  /* Set a fixed width for all images*/
+        /*height: 1000px; /* Set a fixed height for all images */
+        object-fit: cover; /* Ensures the image maintains its aspect ratio while filling the defined area*/
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload an Image</h1>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required>
+        <button class="button" type="submit">Analyze Emotion</button>
+    </form>
+
+    {% if output_image %}
+    <div class="result">
+        <h3>The image says : {{ emotion_label }}! {{ comical_message }}</h3>
+    </div>
+    <div class="result">
+        <p>Processing Time: {{ elapsed_time }} ms</p>
+    </div>
+    <div class="image-container">
+        <img src="{{ output_image }}" id="output-image">
+    </div>
+    {% endif %}
+</body>
+</html>

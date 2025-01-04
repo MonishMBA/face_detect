@@ -1,0 +1,9 @@
+opencv-python
+deepface
+tf_keras
+Flask
+numpy
+PTL
+pickle4
+requests
+gunicorn

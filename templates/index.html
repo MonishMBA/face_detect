@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Know Your Emo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff; /* Light blue */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .button {
+            margin: 20px;
+            padding: 15px 30px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        #output-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Know Your Emo</h1>
+    <p>Discover emotions in your photos or in real-time using our facial emotion recognition model.</p>
+    <div class="container">
+        <button class="button" onclick="location.href='/upload'">Upload an Image</button>
+        <button class="button" onclick="location.href='/live'">Let's Do Live Recognition</button>
+    </div>
+</body>
+</html>
