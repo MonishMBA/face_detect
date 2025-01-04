@@ -4,12 +4,8 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 import base64
-import cv2
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 import time
 import random
-import json
 import pickle
 from deepface import DeepFace
 import requests
@@ -102,24 +98,30 @@ def upload():
 
 @app.route('/live')
 def live():
+    """Render the live video feed page."""
     return render_template('live.html')
 
 @app.route('/process_frame', methods=['POST'])
 def process_frame():
-    frame = request.files['frame']
+    """Process a single frame from the webcam and return detected emotions."""
+    # Get the frame from the frontend
+    frame_data = request.json['frame']
+    nparr = np.frombuffer(base64.b64decode(frame_data.split(',')[1]), np.uint8)
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    # Convert the received frame to a numpy array
-    image = Image.open(frame)
-    frame_np = np.array(image)
+    processed_frame, emotion_label, elapsed, comical_message = detect_emotion(frame)
 
-    # Process the frame to detect emotion
-    processed_frame, emotion_label, elapsed, comical_message = detect_emotion(frame_np)
+    # Convert processed frame to base64-encoded string to send it back to the frontend
+    _, buffer = cv2.imencode('.jpg', processed_frame)
+    frame_bytes = base64.b64encode(buffer).decode('utf-8')
 
-    # Return the result as a JSON response
     return jsonify({
         'emotion': emotion_label,
-        'time_ms': elapsed
+        'time_ms': elapsed,
+        'frame': f"data:image/jpeg;base64,{frame_bytes}",
+        'comical_message': comical_message
     })
+
 
 if __name__ == '__main__':
     app.run()
