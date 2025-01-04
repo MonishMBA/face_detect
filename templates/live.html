@@ -4,18 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Webcam Feed with Emotion Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #video-container {
+            display: flex;
+            align-items: center;
+        }
+        #webcam {
+            border: 2px solid #333;
+            margin-right: 20px;
+        }
+        #emotionContainer {
+            max-height: 400px;
+            overflow-y: auto;
+            width: 300px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+        }
+        .emotionItem {
+            font-size: 20px;
+            padding: 5px;
+            margin-bottom: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0px 0px 5px rgba(0,0,0,0.1);
+        }
+        .emotionText {
+            max-width: 200px;
+        }
+        .emotionTime {
+            font-size: 14px;
+            color: gray;
+        }
+        #canvas {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>Webcam Feed with Emotion Detection</h1>
-    <video id="webcam" width="640" height="480" autoplay></video>
+    <div id="video-container">
+        <video id="webcam" width="640" height="480" autoplay></video>
+        <div id="emotionContainer">
+            <!-- Emotion history will be added here -->
+        </div>
+    </div>
 
-    <!-- Hidden canvas to capture frames from the video -->
-    <canvas id="canvas" style="display: none;"></canvas>
+    <canvas id="canvas"></canvas>
 
     <script>
         const videoElement = document.getElementById('webcam');
         const canvasElement = document.getElementById('canvas');
         const canvasContext = canvasElement.getContext('2d');
+        const emotionContainer = document.getElementById('emotionContainer');
 
         // Request webcam access
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -26,41 +80,47 @@
                 console.error('Error accessing webcam: ' + err);
             });
 
-        // Function to send the frame to the server
         function sendFrameToServer() {
-            // Draw the current video frame onto the canvas
+            // Draw the current video frame to the hidden canvas
             canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-
-            // Convert the frame to a base64-encoded image
             const frameData = canvasElement.toDataURL('image/jpeg');
 
-            // Send the frame to the server using Fetch API
+            // Send the frame to the Flask server
             fetch('/process_frame', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ frame: frameData })
             })
             .then(response => response.json())
             .then(data => {
-                // Display the emotion detected and update the video feed with the processed frame
-                console.log('Emotion:', data.emotion);
-                console.log('Time taken:', data.time_ms, 'ms');
+                // Create a new element for the latest emotion and computation time
+                const emotionItem = document.createElement('div');
+                emotionItem.className = 'emotionItem';
 
-                // Update the video element with the processed frame
-                const processedImage = new Image();
-                processedImage.src = data.frame;
-                processedImage.onload = function() {
-                    document.body.appendChild(processedImage);  // Optionally, you can replace the existing image here
-                };
+                const emotionText = document.createElement('span');
+                emotionText.className = 'emotionText';
+                emotionText.textContent = `Emotion: ${data.emotion}`;
+
+                const emotionTime = document.createElement('span');
+                emotionTime.className = 'emotionTime';
+                emotionTime.textContent = `Time: ${data.time_ms} ms`;
+
+                // Append the emotion text and computation time to the new element
+                emotionItem.appendChild(emotionText);
+                emotionItem.appendChild(emotionTime);
+
+                // Add the new emotion item to the top of the container
+                emotionContainer.insertBefore(emotionItem, emotionContainer.firstChild);
+
+                // Automatically scroll to the top to show the latest emotion
+                emotionContainer.scrollTop = 0;
             })
             .catch(error => {
                 console.error('Error sending frame to server:', error);
             });
         }
 
-        // Call sendFrameToServer every 100ms to send frames periodically
+        // Send frame every 100 milliseconds
         setInterval(sendFrameToServer, 100);
     </script>
 </body>
