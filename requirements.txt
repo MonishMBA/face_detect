@@ -6,4 +6,5 @@ PTL
 requests
 gunicorn
 Pillow
+tensorflow
 tf_keras
